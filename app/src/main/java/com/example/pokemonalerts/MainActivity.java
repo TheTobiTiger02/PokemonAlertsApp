@@ -10,15 +10,22 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class MainActivity extends AppCompatActivity implements PokemonAdapter.OnPokemonClickListener {
 
+    private static final String TAG = "MainActivity";
     private PokemonViewModel viewModel;
     private PokemonAdapter adapter;
     private RecyclerView recyclerView;
@@ -26,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
     private ProgressBar progressBar;
     private TextView errorText;
     private TabLayout tabLayout;
+    private Button btnDebug;
 
     private static final String[] ALERT_TYPES = {"All", "Rare", "PvP", "Hundo", "Nundo", "Raid", "Rocket", "Kecleon"};
 
@@ -48,6 +56,12 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
         tabLayout = findViewById(R.id.tabLayout);
+        btnDebug = findViewById(R.id.btnDebug);
+
+        // Set up debug button
+        btnDebug.setOnClickListener(v -> {
+            callTestEndpoint();
+        });
 
         // Set up auto-refresh
         setupAutoRefresh();
@@ -116,6 +130,47 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         viewModel.loadPokemonReports();
     }
 
+    private void callTestEndpoint() {
+        Toast.makeText(this, "Calling test endpoint...", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Calling /api/test endpoint");
+
+        // Show loading indicator
+        progressBar.setVisibility(View.VISIBLE);
+
+        // Create API service
+        PokemonApiService apiService = ApiClient.getClient().create(PokemonApiService.class);
+        Call<Void> call = apiService.testApiEndpoint();
+
+        // Execute the call
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                progressBar.setVisibility(View.GONE);
+
+                if (response.isSuccessful()) {
+                    Log.d(TAG, "Test endpoint call successful: " + response.code());
+                    Toast.makeText(MainActivity.this,
+                            "Test successful! Response code: " + response.code(),
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Log.e(TAG, "Test endpoint failed: " + response.code());
+                    Toast.makeText(MainActivity.this,
+                            "Test failed! Response code: " + response.code(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                Log.e(TAG, "Test endpoint error: " + t.getMessage(), t);
+                Toast.makeText(MainActivity.this,
+                        "Test error: " + t.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     private void setupAutoRefresh() {
         autoRefreshHandler = new Handler(Looper.getMainLooper());
         autoRefreshRunnable = new Runnable() {
@@ -129,7 +184,6 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
             }
         };
     }
-
 
     @Override
     protected void onResume() {
@@ -147,18 +201,27 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
 
     @Override
     public void onViewMapClick(PokemonReport pokemon) {
-        // Open map with the Pokemon's location
-        Uri gmmIntentUri = Uri.parse("geo:" + pokemon.getLatitude() + "," + pokemon.getLongitude() + "?q=" + pokemon.getLatitude() + "," + pokemon.getLongitude() + "(" + pokemon.getName() + ")");
-        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-        mapIntent.setPackage("com.google.android.apps.maps");
+        try {
+            // Correct order: latitude first, then longitude for Google Maps
+            String uriString = "geo:" + pokemon.getLatitude() + "," + pokemon.getLongitude() +
+                    "?q=" + pokemon.getLatitude() + "," + pokemon.getLongitude() +
+                    "(" + pokemon.getName() + ")";
 
-        if (mapIntent.resolveActivity(getPackageManager()) != null) {
-            startActivity(mapIntent);
-        } else {
-            // Option 2: Open in our own MapActivity
-            Intent intent = new Intent(this, MapActivity.class);
-            intent.putExtra("pokemon", pokemon);
-            startActivity(intent);
+            Uri gmmIntentUri = Uri.parse(uriString);
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+
+            if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(mapIntent);
+            } else {
+                // Fallback to custom map if needed
+                Intent intent = new Intent(this, MapActivity.class);
+                intent.putExtra("pokemon", pokemon);
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening maps: " + e.getMessage(), e);
+            Toast.makeText(this, "Error opening map", Toast.LENGTH_SHORT).show();
         }
     }
 }

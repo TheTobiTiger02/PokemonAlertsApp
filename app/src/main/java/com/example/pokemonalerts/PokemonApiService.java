@@ -7,4 +7,7 @@ import retrofit2.http.GET;
 public interface PokemonApiService {
     @GET("/api/pokemon")
     Call<List<PokemonReport>> getPokemonReports();
+
+    @GET("/api/test")
+    Call<Void> testApiEndpoint();
 }
