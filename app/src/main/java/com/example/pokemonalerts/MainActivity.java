@@ -32,6 +32,9 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Start widget update service
+        startService(new Intent(this, WidgetUpdateService.class));
+
         // Initialize views
         recyclerView = findViewById(R.id.recyclerView);
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
@@ -54,6 +57,11 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         // Observe LiveData
         viewModel.getPokemonReports().observe(this, pokemonReports -> {
             adapter.setPokemonList(pokemonReports);
+
+            // Update widgets when data changes
+            Intent updateWidgetIntent = new Intent(this, PokemonWidgetProvider.class);
+            updateWidgetIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
+            sendBroadcast(updateWidgetIntent);
         });
 
         viewModel.getIsLoading().observe(this, isLoading -> {
@@ -100,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
 
     @Override
     public void onViewMapClick(PokemonReport pokemon) {
-        // Option 1: Open in Google Maps
+        // Open map with the Pokemon's location
         Uri gmmIntentUri = Uri.parse("geo:" + pokemon.getLatitude() + "," + pokemon.getLongitude() + "?q=" + pokemon.getLatitude() + "," + pokemon.getLongitude() + "(" + pokemon.getName() + ")");
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage("com.google.android.apps.maps");
