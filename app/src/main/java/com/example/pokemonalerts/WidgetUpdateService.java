@@ -17,7 +17,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class WidgetUpdateService extends Service {
-    private static final long UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    private static final long UPDATE_INTERVAL = 5 * 1000; // 5 seconds
     private Timer timer;
 
     @Override
@@ -28,7 +28,7 @@ public class WidgetUpdateService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Schedule periodic updates
+        // Schedule frequent updates
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -46,25 +46,30 @@ public class WidgetUpdateService extends Service {
         call.enqueue(new Callback<List<PokemonReport>>() {
             @Override
             public void onResponse(Call<List<PokemonReport>> call, Response<List<PokemonReport>> response) {
-                if (response.isSuccessful()) {
-                    // Data updated successfully, now update the widget
-                    AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
-                    int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
-                            new ComponentName(getApplicationContext(), PokemonWidgetProvider.class));
+                if (response.isSuccessful() && response.body() != null) {
+                    // Check if data has actually changed before updating widget
+                    boolean dataChanged = PokemonWidgetService.updatePokemonReports(response.body());
 
-                    // Notify widgets to update their data
-                    appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list_view);
+                    if (dataChanged) {
+                        // Only update widgets if the data has changed
+                        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
+                        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
+                                new ComponentName(getApplicationContext(), PokemonWidgetProvider.class));
 
-                    // Broadcast to update widget UI
-                    Intent updateIntent = new Intent(getApplicationContext(), PokemonWidgetProvider.class);
-                    updateIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
-                    sendBroadcast(updateIntent);
+                        // Notify widgets to update their data
+                        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list_view);
+
+                        // Broadcast to update widget UI
+                        Intent updateIntent = new Intent(getApplicationContext(), PokemonWidgetProvider.class);
+                        updateIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
+                        sendBroadcast(updateIntent);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<List<PokemonReport>> call, Throwable t) {
-                // Handle error
+                // Handle error - but don't update widgets on error
             }
         });
     }

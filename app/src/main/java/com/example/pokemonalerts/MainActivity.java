@@ -8,6 +8,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -27,6 +29,11 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
 
     private static final String[] ALERT_TYPES = {"All", "Rare", "PvP", "Hundo", "Nundo", "Raid", "Rocket", "Kecleon"};
 
+    // Auto-refresh handler and runnable
+    private Handler autoRefreshHandler;
+    private Runnable autoRefreshRunnable;
+    private static final long AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
         tabLayout = findViewById(R.id.tabLayout);
+
+        // Set up auto-refresh
+        setupAutoRefresh();
 
         // Set up tabs
         for (String type : ALERT_TYPES) {
@@ -104,6 +114,35 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
 
         // Load data
         viewModel.loadPokemonReports();
+    }
+
+    private void setupAutoRefresh() {
+        autoRefreshHandler = new Handler(Looper.getMainLooper());
+        autoRefreshRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Refresh data silently (without showing loading indicator)
+                viewModel.loadPokemonReports(true);
+
+                // Schedule next refresh
+                autoRefreshHandler.postDelayed(this, AUTO_REFRESH_INTERVAL);
+            }
+        };
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Start auto-refresh when activity is visible
+        autoRefreshHandler.postDelayed(autoRefreshRunnable, AUTO_REFRESH_INTERVAL);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop auto-refresh when activity is not visible
+        autoRefreshHandler.removeCallbacks(autoRefreshRunnable);
     }
 
     @Override

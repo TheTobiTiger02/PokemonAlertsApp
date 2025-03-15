@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.widget.RemoteViews;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +22,10 @@ public class PokemonWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_ITEM_CLICK = "com.example.pokemonalerts.ACTION_ITEM_CLICK";
     public static final String EXTRA_ITEM_POSITION = "com.example.pokemonalerts.EXTRA_ITEM_POSITION";
 
+    // Track last update time to prevent excessive UI updates
+    private static long lastUpdateTime = 0;
+    private static final long MIN_UPDATE_INTERVAL = 1000; // 1 second minimum between visual updates
+
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         // Update each widget
@@ -29,6 +35,13 @@ public class PokemonWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+        // Check if we should update the widget UI
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastUpdateTime < MIN_UPDATE_INTERVAL) {
+            return; // Skip this update to prevent flickering
+        }
+        lastUpdateTime = currentTime;
+
         // Set up the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pokemon_alerts);
 
@@ -44,8 +57,8 @@ public class PokemonWidgetProvider extends AppWidgetProvider {
 
         // Set last updated time
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-        String currentTime = sdf.format(new Date());
-        views.setTextViewText(R.id.widget_last_updated, "Last updated: " + currentTime);
+        String currentTimeStr = sdf.format(new Date());
+        views.setTextViewText(R.id.widget_last_updated, "Last updated: " + currentTimeStr);
 
         // Create intent to launch the main activity when widget title is clicked
         Intent openAppIntent = new Intent(context, MainActivity.class);
@@ -74,10 +87,7 @@ public class PokemonWidgetProvider extends AppWidgetProvider {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, PokemonWidgetProvider.class));
 
-            // First, update the data in the remote adapter
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list_view);
-
-            // Then update each widget UI
+            // We only update the widget UI - data is already updated in WidgetUpdateService
             for (int appWidgetId : appWidgetIds) {
                 updateAppWidget(context, appWidgetManager, appWidgetId);
             }

@@ -15,6 +15,7 @@ public class PokemonViewModel extends ViewModel {
     private MutableLiveData<List<PokemonReport>> pokemonReports = new MutableLiveData<>();
     private MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private MutableLiveData<String> error = new MutableLiveData<>();
+    private boolean isSilentRefresh = false;
 
     public LiveData<List<PokemonReport>> getPokemonReports() {
         return pokemonReports;
@@ -29,7 +30,15 @@ public class PokemonViewModel extends ViewModel {
     }
 
     public void loadPokemonReports() {
-        isLoading.setValue(true);
+        loadPokemonReports(false);
+    }
+
+    public void loadPokemonReports(boolean silent) {
+        // Only show loading indicator for non-silent refreshes
+        isSilentRefresh = silent;
+        if (!silent) {
+            isLoading.setValue(true);
+        }
 
         PokemonApiService apiService = ApiClient.getClient().create(PokemonApiService.class);
         Call<List<PokemonReport>> call = apiService.getPokemonReports();
@@ -37,18 +46,25 @@ public class PokemonViewModel extends ViewModel {
         call.enqueue(new Callback<List<PokemonReport>>() {
             @Override
             public void onResponse(Call<List<PokemonReport>> call, Response<List<PokemonReport>> response) {
-                isLoading.setValue(false);
+                if (!isSilentRefresh) {
+                    isLoading.setValue(false);
+                }
+
                 if (response.isSuccessful()) {
                     pokemonReports.setValue(response.body());
                 } else {
-                    error.setValue("Failed to fetch data: " + response.code());
+                    if (!isSilentRefresh) {
+                        error.setValue("Failed to fetch data: " + response.code());
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<List<PokemonReport>> call, Throwable t) {
-                isLoading.setValue(false);
-                error.setValue("Network error: " + t.getMessage());
+                if (!isSilentRefresh) {
+                    isLoading.setValue(false);
+                    error.setValue("Network error: " + t.getMessage());
+                }
             }
         });
     }

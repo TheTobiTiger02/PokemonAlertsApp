@@ -14,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -21,12 +22,58 @@ import retrofit2.Response;
 public class PokemonWidgetService extends RemoteViewsService {
 
     private static List<PokemonReport> pokemonReports = new ArrayList<>();
+    // Keep track of previous data to avoid unnecessary updates
+    private static List<PokemonReport> previousPokemonReports = new ArrayList<>();
 
     public static PokemonReport getPokemonAtPosition(int position) {
         if (position >= 0 && position < pokemonReports.size()) {
             return pokemonReports.get(position);
         }
         return null;
+    }
+
+    /**
+     * Compares two PokemonReport lists to check if there are actual changes
+     * @return true if the data has changed, false otherwise
+     */
+    public static boolean hasDataChanged(List<PokemonReport> newData) {
+        if (newData.size() != previousPokemonReports.size()) {
+            return true; // Different size means data has changed
+        }
+
+        // Compare each item - simplified comparison focusing on key fields
+        for (int i = 0; i < newData.size(); i++) {
+            PokemonReport newItem = newData.get(i);
+            PokemonReport oldItem = previousPokemonReports.get(i);
+
+            // Compare essential fields - name and endTime are usually enough
+            // to determine if it's a different Pokemon alert
+            if (!Objects.equals(newItem.getName(), oldItem.getName()) ||
+                    !Objects.equals(newItem.getEndTime(), oldItem.getEndTime())) {
+                return true;
+            }
+        }
+
+        return false; // No changes detected
+    }
+
+    /**
+     * Updates the Pokemon reports data only if there are changes
+     * @return true if the data was updated, false if no changes were needed
+     */
+    public static boolean updatePokemonReports(List<PokemonReport> newData) {
+        if (newData == null) {
+            return false;
+        }
+
+        if (hasDataChanged(newData)) {
+            // Save previous data before updating
+            previousPokemonReports = new ArrayList<>(pokemonReports);
+            pokemonReports = newData;
+            return true;
+        }
+
+        return false; // No update needed
     }
 
     @Override
@@ -36,6 +83,7 @@ public class PokemonWidgetService extends RemoteViewsService {
 
     class PokemonRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
         private Context context;
+        private boolean dataChanged = false;
 
         PokemonRemoteViewsFactory(Context context) {
             this.context = context;
@@ -49,26 +97,27 @@ public class PokemonWidgetService extends RemoteViewsService {
         @Override
         public void onDataSetChanged() {
             // Fetch the latest Pokemon reports when data changes
-            fetchPokemonReports();
+            dataChanged = fetchPokemonReports();
         }
 
-        private void fetchPokemonReports() {
+        private boolean fetchPokemonReports() {
             PokemonApiService apiService = ApiClient.getClient().create(PokemonApiService.class);
             Call<List<PokemonReport>> call = apiService.getPokemonReports();
 
             try {
                 Response<List<PokemonReport>> response = call.execute(); // Synchronous call for widget
                 if (response.isSuccessful() && response.body() != null) {
-                    pokemonReports = response.body();
+                    return updatePokemonReports(response.body());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return false;
         }
 
         @Override
         public void onDestroy() {
-            pokemonReports.clear();
+            // No need to clear data on destroy - we want to keep it for comparison
         }
 
         @Override
