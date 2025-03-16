@@ -56,11 +56,15 @@ public class PokemonDetailActivity extends AppCompatActivity {
                 .into(detailImage);
 
         btnDetailShare.setOnClickListener(v -> {
+            // Create a Google Maps search link using the Pokémon's coordinates.
+            String mapsLink = "https://www.google.com/maps/search/?api=1&query=" +
+                    pokemon.getLatitude() + "," + pokemon.getLongitude();
             String shareText = "Check out this Pokémon alert!\n\n" +
                     "Name: " + pokemon.getName() + "\n" +
                     "Type: " + pokemon.getType() + "\n" +
                     "Available until: " + pokemon.getEndTime() + "\n" +
-                    "Description: " + pokemon.getDescription();
+                    "Description: " + pokemon.getDescription() + "\n" +
+                    "Location: " + mapsLink;
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
             shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
@@ -75,7 +79,6 @@ public class PokemonDetailActivity extends AppCompatActivity {
                 Uri gmmIntentUri = Uri.parse(uriString);
                 Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
                 mapIntent.setPackage("com.google.android.apps.maps");
-
                 if (mapIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(mapIntent);
                 } else {

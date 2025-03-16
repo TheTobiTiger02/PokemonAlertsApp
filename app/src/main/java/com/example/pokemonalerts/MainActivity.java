@@ -137,7 +137,6 @@ public class MainActivity extends AppCompatActivity
                 updateDisplayedPokemonList();
                 return false;
             }
-
             @Override
             public boolean onQueryTextChange(String newText) {
                 searchQuery = newText;
@@ -156,12 +155,9 @@ public class MainActivity extends AppCompatActivity
 
         // Show loading indicator
         progressBar.setVisibility(View.VISIBLE);
-
-        // Create API service
         PokemonApiService apiService = ApiClient.getClient().create(PokemonApiService.class);
         Call<Void> call = apiService.testApiEndpoint();
 
-        // Execute the call
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
@@ -178,7 +174,6 @@ public class MainActivity extends AppCompatActivity
                             Toast.LENGTH_LONG).show();
                 }
             }
-
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
@@ -195,7 +190,6 @@ public class MainActivity extends AppCompatActivity
         autoRefreshRunnable = new Runnable() {
             @Override
             public void run() {
-                // Refresh data silently (without showing loading indicator)
                 viewModel.loadPokemonReports(true);
                 autoRefreshHandler.postDelayed(this, AUTO_REFRESH_INTERVAL);
             }
@@ -215,8 +209,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Updates the displayed Pokémon list by filtering based on the currently
-     * selected type (from tabs) and the search query.
+     * Updates the displayed Pokémon list by filtering by the tab selection
+     * and the search query.
      */
     private void updateDisplayedPokemonList() {
         List<PokemonReport> fullList = viewModel.getPokemonReports().getValue();
@@ -240,7 +234,7 @@ public class MainActivity extends AppCompatActivity
     // -----------------------
     // Implementation of OnPokemonClickListener:
 
-    // Launch the detail activity to show more info
+    // Launch the detail activity to show more info.
     @Override
     public void onItemClick(PokemonReport pokemon) {
         Intent detailIntent = new Intent(this, PokemonDetailActivity.class);
@@ -248,7 +242,7 @@ public class MainActivity extends AppCompatActivity
         startActivity(detailIntent);
     }
 
-    // The existing map action remains unchanged.
+    // Opens the Pokémon location on a map.
     @Override
     public void onViewMapClick(PokemonReport pokemon) {
         try {
@@ -258,7 +252,6 @@ public class MainActivity extends AppCompatActivity
             Uri gmmIntentUri = Uri.parse(uriString);
             Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
             mapIntent.setPackage("com.google.android.apps.maps");
-
             if (mapIntent.resolveActivity(getPackageManager()) != null) {
                 startActivity(mapIntent);
             } else {
@@ -272,14 +265,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    // Share the Pokémon alert details via an ACTION_SEND intent.
+    // Share the Pokémon alert including a Google Maps link.
     @Override
     public void onShareClick(PokemonReport pokemon) {
+        // Create a Google Maps search link using latitude and longitude.
+        String mapsLink = "https://www.google.com/maps/search/?api=1&query=" +
+                pokemon.getLatitude() + "," + pokemon.getLongitude();
         String shareText = "Check out this Pokémon alert!\n\n" +
                 "Name: " + pokemon.getName() + "\n" +
                 "Type: " + pokemon.getType() + "\n" +
                 "Available until: " + pokemon.getEndTime() + "\n" +
-                "Description: " + pokemon.getDescription();
+                "Description: " + pokemon.getDescription() + "\n" +
+                "View Location: " + mapsLink;
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
