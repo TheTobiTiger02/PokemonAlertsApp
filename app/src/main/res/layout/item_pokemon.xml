@@ -5,14 +5,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,32 +25,38 @@
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:scaleType="centerCrop"
-                android:contentDescription="Pokemon Image" />
+                android:contentDescription="Pokemon Image"
+                android:layout_marginEnd="8dp" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="16dp">
+                android:layout_weight="1">
 
                 <TextView
                     android:id="@+id/pokemonName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:textColor="@color/black" />
 
                 <TextView
                     android:id="@+id/pokemonType"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textStyle="italic" />
+                    android:textSize="14sp"
+                    android:textStyle="italic"
+                    android:textColor="@color/black"
+                    android:layout_marginTop="4dp" />
 
                 <TextView
                     android:id="@+id/pokemonEndTime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"
                     android:layout_marginTop="4dp" />
             </LinearLayout>
         </LinearLayout>
@@ -58,9 +65,11 @@
             android:id="@+id/pokemonDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/black"
             android:layout_marginTop="8dp" />
 
-        <!-- Horizontal layout with two buttons -->
+        <!-- Horizontal layout for buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -69,17 +78,21 @@
 
             <Button
                 android:id="@+id/btnViewOnMap"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="View on Map" />
+                android:text="View on Map"
+                android:layout_marginEnd="4dp" />
 
             <Button
                 android:id="@+id/btnShare"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Share" />
+                android:text="Share"
+                android:layout_marginStart="4dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

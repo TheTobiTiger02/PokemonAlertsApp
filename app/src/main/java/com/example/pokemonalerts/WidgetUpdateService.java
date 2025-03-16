@@ -1,4 +1,3 @@
-// WidgetUpdateService.java
 package com.example.pokemonalerts;
 
 import android.Manifest;
@@ -60,7 +59,7 @@ public class WidgetUpdateService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Pokemon Alerts Channel";
             String description = "Channel for Pokemon Alerts notifications";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -69,19 +68,21 @@ public class WidgetUpdateService extends Service {
     }
 
     private void updateWidgetData() {
-        PokemonApiService apiService = ApiClient.getClient().create(PokemonApiService.class);
+        PokemonApiService apiService =
+                ApiClient.getClient().create(PokemonApiService.class);
         Call<List<PokemonReport>> call = apiService.getPokemonReports();
 
         call.enqueue(new Callback<List<PokemonReport>>() {
             @Override
-            public void onResponse(Call<List<PokemonReport>> call, Response<List<PokemonReport>> response) {
+            public void onResponse(Call<List<PokemonReport>> call,
+                                   Response<List<PokemonReport>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PokemonReport> newPokemonReports = response.body();
                     boolean dataChanged =
                             PokemonWidgetService.updatePokemonReports(newPokemonReports);
 
                     if (dataChanged) {
-                        // Show notification for the first new alert
+                        // Show notification for the first new alert if available
                         if (!newPokemonReports.isEmpty()) {
                             showNotification(newPokemonReports.get(0));
                         }
@@ -90,16 +91,16 @@ public class WidgetUpdateService extends Service {
                         AppWidgetManager appWidgetManager =
                                 AppWidgetManager.getInstance(getApplicationContext());
                         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
-                                new ComponentName(
-                                        getApplicationContext(), PokemonWidgetProvider.class));
+                                new ComponentName(getApplicationContext(),
+                                        PokemonWidgetProvider.class));
 
                         // Notify widgets to update their data
                         appWidgetManager.notifyAppWidgetViewDataChanged(
                                 appWidgetIds, R.id.widget_list_view);
 
                         // Broadcast to update widget UI
-                        Intent updateIntent =
-                                new Intent(getApplicationContext(), PokemonWidgetProvider.class);
+                        Intent updateIntent = new Intent(getApplicationContext(),
+                                PokemonWidgetProvider.class);
                         updateIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
                         sendBroadcast(updateIntent);
                     }
@@ -108,7 +109,6 @@ public class WidgetUpdateService extends Service {
 
             @Override
             public void onFailure(Call<List<PokemonReport>> call, Throwable t) {
-                // Handle error - but don't update widgets on error
                 Log.e(TAG, "API call failed: " + t.getMessage());
             }
         });
@@ -118,30 +118,33 @@ public class WidgetUpdateService extends Service {
         // Create an explicit intent for the MainActivity
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(
-                        this,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT |
+                        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
+                                PendingIntent.FLAG_IMMUTABLE : 0));
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.mipmap.ic_launcher_round)
                         .setContentTitle("New Pokémon Alert!")
-                        .setContentText(
-                                "A "
-                                        + pokemon.getName()
-                                        + " of type "
-                                        + pokemon.getType()
-                                        + " is available!")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentText("A " + pokemon.getName() + " of type " +
+                                pokemon.getType() + " is available!")
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(
+                                "Alert: " + pokemon.getName() + "\nType: " + pokemon.getType() +
+                                        "\nAvailable until: " + pokemon.getEndTime() +
+                                        "\nDescription: " + pokemon.getDescription()))
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setContentIntent(pendingIntent)
-                        .setAutoCancel(true);
+                        .setAutoCancel(true)
+                        .setColor(getResources().getColor(R.color.colorPrimary));
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+        NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             Log.e(TAG, "Notification permission not granted");
             return;
         }
