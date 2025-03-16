@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Using #55000000 gives about 33% opacity black -->
-    <solid android:color="#55000000" />
+    <solid android:color="#CC101010" />
     <corners android:radius="12dp" />
 </shape>

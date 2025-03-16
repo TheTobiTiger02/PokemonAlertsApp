@@ -1,98 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="6dp"
-    app:cardUseCompatPadding="true">
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="@color/cardBackground"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    style="@style/Widget.App.CardView">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="12dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/pokemonImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerInside"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/placeholder_pokemon" />
+
+        <TextView
+            android:id="@+id/pokemonName"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:textColor="@color/textColorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/pokemonImage"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Pikachu" />
 
-            <ImageView
-                android:id="@+id/pokemonImage"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:scaleType="centerCrop"
-                android:contentDescription="Pokemon Image"
-                android:layout_marginEnd="8dp" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/pokemonType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            app:chipMinHeight="24dp"
+            app:layout_constraintStart_toEndOf="@id/pokemonImage"
+            app:layout_constraintTop_toBottomOf="@id/pokemonName"
+            tools:text="Rare" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1">
-
-                <TextView
-                    android:id="@+id/pokemonName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black" />
-
-                <TextView
-                    android:id="@+id/pokemonType"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textStyle="italic"
-                    android:textColor="@color/black"
-                    android:layout_marginTop="4dp" />
-
-                <TextView
-                    android:id="@+id/pokemonEndTime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textColor="@color/black"
-                    android:layout_marginTop="4dp" />
-            </LinearLayout>
-        </LinearLayout>
+        <TextView
+            android:id="@+id/pokemonEndTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:textColor="@color/textColorSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/pokemonImage"
+            app:layout_constraintTop_toBottomOf="@id/pokemonType"
+            tools:text="Available until: 14:30" />
 
         <TextView
             android:id="@+id/pokemonDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:textColor="@color/textColorSecondary"
+            app:layout_constraintTop_toBottomOf="@id/pokemonImage"
+            tools:text="This rare Pikachu has perfect IVs!" />
 
-        <!-- Horizontal layout for buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            app:layout_constraintTop_toBottomOf="@id/pokemonDescription">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnViewOnMap"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="View on Map"
-                android:layout_marginEnd="4dp" />
+                android:text="Map"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_map" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnShare"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Share"
-                android:layout_marginStart="4dp" />
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_share" />
         </LinearLayout>
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

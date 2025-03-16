@@ -19,7 +19,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,6 +39,9 @@ public class WidgetUpdateService extends Service {
     private static final String CHANNEL_ID = "PokemonAlertsChannel";
     private static int notificationId = 0; // Increment for each notification
     private Timer timer;
+
+    // Track previously seen alerts to avoid duplicate notifications
+    private Set<String> notifiedAlertIds = new HashSet<>();
 
     @Override
     public void onCreate() {
@@ -78,15 +86,14 @@ public class WidgetUpdateService extends Service {
                                    Response<List<PokemonReport>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PokemonReport> newPokemonReports = response.body();
+
+                    // First check for any new alerts that need notifications
+                    checkForNewAlerts(newPokemonReports);
+
                     boolean dataChanged =
                             PokemonWidgetService.updatePokemonReports(newPokemonReports);
 
                     if (dataChanged) {
-                        // Show notification for the first new alert if available
-                        if (!newPokemonReports.isEmpty()) {
-                            showNotification(newPokemonReports.get(0));
-                        }
-
                         // Only update widgets if the data has changed
                         AppWidgetManager appWidgetManager =
                                 AppWidgetManager.getInstance(getApplicationContext());
@@ -112,6 +119,49 @@ public class WidgetUpdateService extends Service {
                 Log.e(TAG, "API call failed: " + t.getMessage());
             }
         });
+    }
+
+    private void checkForNewAlerts(List<PokemonReport> currentReports) {
+        List<PokemonReport> newAlerts = new ArrayList<>();
+
+        // Create a unique identifier for each alert
+        for (PokemonReport report : currentReports) {
+            String alertId = createAlertId(report);
+
+            // If we haven't seen this alert before, it's new
+            if (!notifiedAlertIds.contains(alertId)) {
+                newAlerts.add(report);
+                notifiedAlertIds.add(alertId);
+            }
+        }
+
+        // Show notifications only for new alerts
+        for (PokemonReport newAlert : newAlerts) {
+            showNotification(newAlert);
+        }
+
+        // Limit the size of the notifiedAlertIds set to prevent memory issues
+        // over long periods of time (this is a simple approach)
+        if (notifiedAlertIds.size() > 1000) {
+            // If we have too many IDs stored, clear older ones
+            // This is a very simple approach - in a real app, you might want
+            // to use a more sophisticated caching mechanism with expiration
+            Set<String> newSet = new HashSet<>();
+            for (PokemonReport report : currentReports) {
+                newSet.add(createAlertId(report));
+            }
+            notifiedAlertIds = newSet;
+        }
+    }
+
+    // Create a unique identifier for a Pokemon alert
+    private String createAlertId(PokemonReport report) {
+        // Combine key fields to create a unique identifier
+        return report.getName() + "_" +
+                report.getType() + "_" +
+                report.getLatitude() + "_" +
+                report.getLongitude() + "_" +
+                report.getEndTime();
     }
 
     private void showNotification(PokemonReport pokemon) {

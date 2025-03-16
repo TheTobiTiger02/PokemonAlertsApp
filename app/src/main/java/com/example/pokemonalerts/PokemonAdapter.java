@@ -12,6 +12,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +55,17 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
         PokemonReport pokemon = pokemonList.get(position);
 
         holder.pokemonName.setText(pokemon.getName());
-        holder.pokemonType.setText("Type: " + pokemon.getType());
-        holder.pokemonEndTime.setText("Available until: " + pokemon.getEndTime());
+        holder.pokemonType.setText(pokemon.getType());
+        holder.pokemonEndTime.setText("Until: " + pokemon.getEndTime());
         holder.pokemonDescription.setText(pokemon.getDescription());
 
-        // Load image with Glide
+        // Set type chip color based on the Pokemon type
+        setTypeChipColor(holder.pokemonType, pokemon.getType());
+
+        // Load image with Glide with fade animation
         Glide.with(context)
                 .load(pokemon.getImageUrl())
+                .transition(DrawableTransitionOptions.withCrossFade())
                 .placeholder(R.drawable.placeholder_pokemon)
                 .error(R.drawable.error_pokemon)
                 .into(holder.pokemonImage);
@@ -85,6 +92,37 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
         });
     }
 
+    private void setTypeChipColor(Chip chip, String type) {
+        int colorResId;
+        switch (type.toLowerCase()) {
+            case "rare":
+                colorResId = R.color.type_rare;
+                break;
+            case "pvp":
+                colorResId = R.color.type_pvp;
+                break;
+            case "hundo":
+                colorResId = R.color.type_hundo;
+                break;
+            case "nundo":
+                colorResId = R.color.type_nundo;
+                break;
+            case "raid":
+                colorResId = R.color.type_raid;
+                break;
+            case "rocket":
+                colorResId = R.color.type_rocket;
+                break;
+            case "kecleon":
+                colorResId = R.color.type_kecleon;
+                break;
+            default:
+                colorResId = R.color.colorPrimary;
+                break;
+        }
+        chip.setChipBackgroundColorResource(colorResId);
+    }
+
     @Override
     public int getItemCount() {
         return pokemonList.size();
@@ -92,8 +130,9 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
 
     static class PokemonViewHolder extends RecyclerView.ViewHolder {
         ImageView pokemonImage;
-        TextView pokemonName, pokemonType, pokemonEndTime, pokemonDescription;
-        Button btnViewOnMap, btnShare;
+        TextView pokemonName, pokemonEndTime, pokemonDescription;
+        Chip pokemonType;
+        MaterialButton btnViewOnMap, btnShare;
 
         public PokemonViewHolder(@NonNull View itemView) {
             super(itemView);

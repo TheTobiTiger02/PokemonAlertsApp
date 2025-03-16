@@ -2,6 +2,7 @@ package com.example.pokemonalerts;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -13,15 +14,18 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -37,8 +41,8 @@ public class MainActivity extends AppCompatActivity
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progressBar;
     private TextView errorText;
-    private TabLayout tabLayout;
-    private Button btnDebug;
+    private ChipGroup filterChipGroup;
+    private FloatingActionButton btnDebug;
     private SearchView searchView;
 
     private static final String[] ALERT_TYPES = {"All", "Rare", "PvP", "Hundo", "Nundo", "Raid", "Rocket", "Kecleon"};
@@ -50,7 +54,7 @@ public class MainActivity extends AppCompatActivity
 
     // Used for filtering
     private String searchQuery = "";
-    private String selectedType = "All";
+    private Set<String> selectedFilters = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +65,14 @@ public class MainActivity extends AppCompatActivity
         startService(new Intent(this, WidgetUpdateService.class));
 
         // Initialize views
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         recyclerView = findViewById(R.id.recyclerView);
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
-        tabLayout = findViewById(R.id.tabLayout);
+        filterChipGroup = findViewById(R.id.filterChipGroup);
         btnDebug = findViewById(R.id.btnDebug);
         searchView = findViewById(R.id.searchView);
 
@@ -75,10 +82,8 @@ public class MainActivity extends AppCompatActivity
         // Set up auto-refresh
         setupAutoRefresh();
 
-        // Set up tabs
-        for (String type : ALERT_TYPES) {
-            tabLayout.addTab(tabLayout.newTab().setText(type));
-        }
+        // Set up filter chips
+        setupFilterChips();
 
         // Set up adapter
         adapter = new PokemonAdapter(this, this);
@@ -89,8 +94,9 @@ public class MainActivity extends AppCompatActivity
 
         // Observe LiveData
         viewModel.getPokemonReports().observe(this, pokemonReports -> {
-            // Whenever new data arrives, update the displayed list
+            // Update the displayed list when new data arrives
             updateDisplayedPokemonList();
+
             // Update widgets when data changes
             Intent updateWidgetIntent = new Intent(this, PokemonWidgetProvider.class);
             updateWidgetIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
@@ -114,21 +120,6 @@ public class MainActivity extends AppCompatActivity
         // Set up SwipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener(() -> viewModel.loadPokemonReports());
 
-        // Set up tab selection listener
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                selectedType = tab.getText().toString();
-                updateDisplayedPokemonList();
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) { }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) { }
-        });
-
         // Set up SearchView listener for filtering by Pokémon name
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -147,6 +138,79 @@ public class MainActivity extends AppCompatActivity
 
         // Load data
         viewModel.loadPokemonReports();
+    }
+
+    private void setupFilterChips() {
+        // Create a chip for each alert type
+        for (String type : ALERT_TYPES) {
+            Chip chip = new Chip(this);
+            chip.setText(type);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+
+            // Apply custom chip style
+            chip.setChipBackgroundColorResource(R.color.chipBackgroundColor);
+
+            // Set "All" as the default selection
+            if (type.equals("All")) {
+                chip.setChecked(true);
+                selectedFilters.add(type);
+            }
+
+            // Add chip click listener
+            chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Special handling for "All" chip
+                if (type.equals("All") && isChecked) {
+                    // If "All" is selected, clear other selections
+                    selectedFilters.clear();
+                    selectedFilters.add("All");
+
+                    // Update chip states
+                    for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                        Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
+                        if (!otherChip.getText().equals("All")) {
+                            otherChip.setChecked(false);
+                        }
+                    }
+                } else if (isChecked) {
+                    // Adding a specific filter
+                    // If this isn't "All" and we're adding it, remove "All"
+                    if (selectedFilters.contains("All")) {
+                        selectedFilters.remove("All");
+                        // Uncheck the "All" chip
+                        for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                            Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
+                            if (otherChip.getText().equals("All")) {
+                                otherChip.setChecked(false);
+                                break;
+                            }
+                        }
+                    }
+                    selectedFilters.add(type);
+                } else {
+                    // Removing a filter
+                    selectedFilters.remove(type);
+
+                    // If no filters are selected, select "All"
+                    if (selectedFilters.isEmpty()) {
+                        selectedFilters.add("All");
+                        // Check the "All" chip
+                        for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                            Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
+                            if (otherChip.getText().equals("All")) {
+                                otherChip.setChecked(true);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Update the displayed list
+                updateDisplayedPokemonList();
+            });
+
+            filterChipGroup.addView(chip);
+        }
     }
 
     private void callTestEndpoint() {
@@ -209,7 +273,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Updates the displayed Pokémon list by filtering by the tab selection
+     * Updates the displayed Pokémon list by filtering by selected types
      * and the search query.
      */
     private void updateDisplayedPokemonList() {
@@ -218,16 +282,31 @@ public class MainActivity extends AppCompatActivity
             adapter.setPokemonList(new ArrayList<>());
             return;
         }
+
         List<PokemonReport> filteredList = new ArrayList<>();
+
         for (PokemonReport report : fullList) {
-            boolean matchesType = selectedType.equals("All") ||
-                    report.getType().equalsIgnoreCase(selectedType);
+            // Check if report matches the search query
             boolean matchesSearch = searchQuery.isEmpty() ||
                     report.getName().toLowerCase().contains(searchQuery.toLowerCase());
-            if (matchesType && matchesSearch) {
+
+            // Check if report matches selected filter types
+            boolean matchesFilter = false;
+
+            // If "All" is selected, show everything
+            if (selectedFilters.contains("All")) {
+                matchesFilter = true;
+            } else {
+                // Check if the report's type matches any of the selected filters
+                matchesFilter = selectedFilters.contains(report.getType());
+            }
+
+            // Add to filtered list if both conditions match
+            if (matchesSearch && matchesFilter) {
                 filteredList.add(report);
             }
         }
+
         adapter.setPokemonList(filteredList);
     }
 

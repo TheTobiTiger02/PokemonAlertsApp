@@ -1,20 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme updated to use MaterialComponents without an ActionBar -->
     <style name="Theme.PokemonAlerts" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorSecondaryVariant">@color/colorSecondary</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorSecondaryVariant">@color/colorAccent</item>
         <item name="colorOnSecondary">@color/black</item>
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/backgroundColor</item>
+        <item name="colorSurface">@color/cardBackground</item>
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/textColorPrimary</item>
+        <item name="android:textColorSecondary">@color/textColorSecondary</item>
         <!-- Status bar color -->
-        <item name="android:statusBarColor">@color/colorPrimaryVariant</item>
-        <!-- Window background -->
-        <item name="android:windowBackground">@color/white</item>
-        <!-- Optional: button style -->
-        <item name="materialButtonOutlinedStyle">@style/Widget.MaterialComponents.Button.OutlinedButton</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <!-- Navigation bar -->
+        <item name="android:navigationBarColor">@color/backgroundColor</item>
+        <!-- Ripple effects -->
+        <item name="colorControlHighlight">@color/rippleColor</item>
+        <!-- Disable default night mode text scaling -->
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- Chip style -->
+    <style name="Widget.App.Chip" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chipBackgroundColor</item>
+        <item name="chipStrokeColor">@color/colorPrimary</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- Card style -->
+    <style name="Widget.App.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/cardBackground</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardCornerRadius">8dp</item>
     </style>
 </resources>

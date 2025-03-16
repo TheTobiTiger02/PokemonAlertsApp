@@ -1,22 +1,28 @@
 package com.example.pokemonalerts;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 
 public class PokemonDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "PokemonDetailActivity";
     private ImageView detailImage;
-    private TextView detailName, detailType, detailEndTime, detailDescription;
-    private Button btnDetailShare, btnViewOnMap, btnBack;
+    private TextView detailName, detailEndTime, detailDescription;
+    private Chip detailType;
+    private MaterialButton btnDetailShare, btnViewOnMap, btnBack;
     private PokemonReport pokemon;
 
     @Override
@@ -24,6 +30,15 @@ public class PokemonDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pokemon_detail);
 
+        // Setup toolbar
+        Toolbar toolbar = findViewById(R.id.detailToolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Find views
         detailImage = findViewById(R.id.detailImage);
         detailName = findViewById(R.id.detailName);
         detailType = findViewById(R.id.detailType);
@@ -45,16 +60,27 @@ public class PokemonDetailActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
+        // Set text values
         detailName.setText(pokemon.getName());
-        detailType.setText("Type: " + pokemon.getType());
+        detailType.setText(pokemon.getType());
         detailEndTime.setText("Available until: " + pokemon.getEndTime());
         detailDescription.setText(pokemon.getDescription());
+
+        // Set toolbar title
+        getSupportActionBar().setTitle(pokemon.getName());
+
+        // Set type chip color
+        setTypeChipColor(detailType, pokemon.getType());
+
+        // Load image with animation
         Glide.with(this)
                 .load(pokemon.getImageUrl())
+                .transition(DrawableTransitionOptions.withCrossFade())
                 .placeholder(R.drawable.placeholder_pokemon)
                 .error(R.drawable.error_pokemon)
                 .into(detailImage);
 
+        // Share button
         btnDetailShare.setOnClickListener(v -> {
             // Create a Google Maps search link using the Pokémon's coordinates.
             String mapsLink = "https://www.google.com/maps/search/?api=1&query=" +
@@ -71,6 +97,7 @@ public class PokemonDetailActivity extends AppCompatActivity {
             startActivity(Intent.createChooser(shareIntent, "Share via"));
         });
 
+        // View on map button
         btnViewOnMap.setOnClickListener(v -> {
             try {
                 String uriString = "geo:" + pokemon.getLatitude() + "," + pokemon.getLongitude() +
@@ -94,5 +121,36 @@ public class PokemonDetailActivity extends AppCompatActivity {
         });
 
         btnBack.setOnClickListener(v -> finish());
+    }
+
+    private void setTypeChipColor(Chip chip, String type) {
+        int colorResId;
+        switch (type.toLowerCase()) {
+            case "rare":
+                colorResId = R.color.type_rare;
+                break;
+            case "pvp":
+                colorResId = R.color.type_pvp;
+                break;
+            case "hundo":
+                colorResId = R.color.type_hundo;
+                break;
+            case "nundo":
+                colorResId = R.color.type_nundo;
+                break;
+            case "raid":
+                colorResId = R.color.type_raid;
+                break;
+            case "rocket":
+                colorResId = R.color.type_rocket;
+                break;
+            case "kecleon":
+                colorResId = R.color.type_kecleon;
+                break;
+            default:
+                colorResId = R.color.colorPrimary;
+                break;
+        }
+        chip.setChipBackgroundColorResource(colorResId);
     }
 }

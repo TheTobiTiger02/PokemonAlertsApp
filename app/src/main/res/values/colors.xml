@@ -1,21 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- New blue–teal theme colors -->
+    <!-- Primary palette -->
     <color name="colorPrimary">#2196F3</color>
-    <color name="colorPrimaryVariant">#1976D2</color>
-    <color name="colorSecondary">#009688</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="black">#FF000000</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#03DAC5</color>
 
-    <!-- Custom colors for Pokémon types -->
+    <!-- Background colors -->
+    <color name="backgroundColor">#FAFAFA</color>
+    <color name="cardBackground">#FFFFFF</color>
+    <color name="dividerColor">#E0E0E0</color>
+
+    <!-- Text colors -->
+    <color name="textColorPrimary">#212121</color>
+    <color name="textColorSecondary">#757575</color>
+    <color name="textColorTertiary">#9E9E9E</color>
+
+    <!-- UI component colors -->
+    <color name="chipBackgroundColor">#E3F2FD</color>
+    <color name="chipSelectedColor">#BBDEFB</color>
+    <color name="iconTint">#616161</color>
+    <color name="rippleColor">#B3E5FC</color>
+
+    <!-- Pokemon type colors (unchanged) -->
     <color name="type_rare">#FFD700</color>
     <color name="type_pvp">#4169E1</color>
     <color name="type_hundo">#FF1493</color>
     <color name="type_nundo">#800080</color>
     <color name="type_raid">#FF4500</color>
     <color name="type_rocket">#696969</color>
+    <color name="type_kecleon">#3CB371</color>
 
-    <!-- Colors for widget background gradient -->
-    <color name="widgetBackgroundStart">#3949AB</color>
-    <color name="widgetBackgroundEnd">#1A237E</color>
+    <!-- Static colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
 </resources>
