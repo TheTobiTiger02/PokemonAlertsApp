@@ -22,8 +22,11 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
     private Context context;
     private OnPokemonClickListener listener;
 
+    // Extended interface with extra callbacks:
     public interface OnPokemonClickListener {
+        void onItemClick(PokemonReport pokemon);
         void onViewMapClick(PokemonReport pokemon);
+        void onShareClick(PokemonReport pokemon);
     }
 
     public PokemonAdapter(Context context, OnPokemonClickListener listener) {
@@ -32,7 +35,7 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
     }
 
     public void setPokemonList(List<PokemonReport> pokemonList) {
-        this.pokemonList = pokemonList != null ? pokemonList : new ArrayList<>();
+        this.pokemonList = (pokemonList != null) ? pokemonList : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -60,9 +63,24 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
                 .error(R.drawable.error_pokemon)
                 .into(holder.pokemonImage);
 
+        // Item click (for detailed view)
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(pokemon);
+            }
+        });
+
+        // View on Map button
         holder.btnViewOnMap.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onViewMapClick(pokemon);
+            }
+        });
+
+        // Share button
+        holder.btnShare.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onShareClick(pokemon);
             }
         });
     }
@@ -75,7 +93,7 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
     static class PokemonViewHolder extends RecyclerView.ViewHolder {
         ImageView pokemonImage;
         TextView pokemonName, pokemonType, pokemonEndTime, pokemonDescription;
-        Button btnViewOnMap;
+        Button btnViewOnMap, btnShare;
 
         public PokemonViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,6 +103,7 @@ public class PokemonAdapter extends RecyclerView.Adapter<PokemonAdapter.PokemonV
             pokemonEndTime = itemView.findViewById(R.id.pokemonEndTime);
             pokemonDescription = itemView.findViewById(R.id.pokemonDescription);
             btnViewOnMap = itemView.findViewById(R.id.btnViewOnMap);
+            btnShare = itemView.findViewById(R.id.btnShare);
         }
     }
 }

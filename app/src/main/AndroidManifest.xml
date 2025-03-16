@@ -7,7 +7,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -28,6 +27,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PokemonDetailActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PokemonAlerts" />
+        <activity
+            android:name=".MapActivity"
+            android:exported="false" />
         <receiver
             android:name=".PokemonWidgetProvider"
             android:exported="true">
@@ -62,10 +68,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBEALUj41qFL8c1oFORClkw9wvtj1JbEvQ" />
-
-        <activity
-            android:name=".MapActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

@@ -60,11 +60,26 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
-        <Button
-            android:id="@+id/btnViewOnMap"
+        <!-- Horizontal layout with two buttons -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="View on Map" />
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnViewOnMap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="View on Map" />
+
+            <Button
+                android:id="@+id/btnShare"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Share" />
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

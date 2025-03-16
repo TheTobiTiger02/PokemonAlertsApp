@@ -1,6 +1,7 @@
 package com.example.pokemonalerts;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -19,11 +20,15 @@ import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements PokemonAdapter.OnPokemonClickListener {
+public class MainActivity extends AppCompatActivity
+        implements PokemonAdapter.OnPokemonClickListener {
 
     private static final String TAG = "MainActivity";
     private PokemonViewModel viewModel;
@@ -34,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
     private TextView errorText;
     private TabLayout tabLayout;
     private Button btnDebug;
+    private SearchView searchView;
 
     private static final String[] ALERT_TYPES = {"All", "Rare", "PvP", "Hundo", "Nundo", "Raid", "Rocket", "Kecleon"};
 
@@ -41,6 +47,10 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
     private Handler autoRefreshHandler;
     private Runnable autoRefreshRunnable;
     private static final long AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+
+    // Used for filtering
+    private String searchQuery = "";
+    private String selectedType = "All";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +67,10 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         errorText = findViewById(R.id.errorText);
         tabLayout = findViewById(R.id.tabLayout);
         btnDebug = findViewById(R.id.btnDebug);
+        searchView = findViewById(R.id.searchView);
 
         // Set up debug button
-        btnDebug.setOnClickListener(v -> {
-            callTestEndpoint();
-        });
+        btnDebug.setOnClickListener(v -> callTestEndpoint());
 
         // Set up auto-refresh
         setupAutoRefresh();
@@ -80,8 +89,8 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
 
         // Observe LiveData
         viewModel.getPokemonReports().observe(this, pokemonReports -> {
-            adapter.setPokemonList(pokemonReports);
-
+            // Whenever new data arrives, update the displayed list
+            updateDisplayedPokemonList();
             // Update widgets when data changes
             Intent updateWidgetIntent = new Intent(this, PokemonWidgetProvider.class);
             updateWidgetIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
@@ -103,27 +112,38 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
         });
 
         // Set up SwipeRefreshLayout
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            viewModel.loadPokemonReports();
-        });
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.loadPokemonReports());
 
         // Set up tab selection listener
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                String selectedType = tab.getText().toString();
-                if (selectedType.equals("All")) {
-                    adapter.setPokemonList(viewModel.getPokemonReports().getValue());
-                } else {
-                    adapter.setPokemonList(viewModel.filterByType(selectedType));
-                }
+                selectedType = tab.getText().toString();
+                updateDisplayedPokemonList();
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) { }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) { }
+        });
+
+        // Set up SearchView listener for filtering by Pokémon name
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchQuery = query;
+                updateDisplayedPokemonList();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searchQuery = newText;
+                updateDisplayedPokemonList();
+                return false;
+            }
         });
 
         // Load data
@@ -146,7 +166,6 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 progressBar.setVisibility(View.GONE);
-
                 if (response.isSuccessful()) {
                     Log.d(TAG, "Test endpoint call successful: " + response.code());
                     Toast.makeText(MainActivity.this,
@@ -178,8 +197,6 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
             public void run() {
                 // Refresh data silently (without showing loading indicator)
                 viewModel.loadPokemonReports(true);
-
-                // Schedule next refresh
                 autoRefreshHandler.postDelayed(this, AUTO_REFRESH_INTERVAL);
             }
         };
@@ -188,25 +205,56 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
     @Override
     protected void onResume() {
         super.onResume();
-        // Start auto-refresh when activity is visible
         autoRefreshHandler.postDelayed(autoRefreshRunnable, AUTO_REFRESH_INTERVAL);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // Stop auto-refresh when activity is not visible
         autoRefreshHandler.removeCallbacks(autoRefreshRunnable);
     }
 
+    /**
+     * Updates the displayed Pokémon list by filtering based on the currently
+     * selected type (from tabs) and the search query.
+     */
+    private void updateDisplayedPokemonList() {
+        List<PokemonReport> fullList = viewModel.getPokemonReports().getValue();
+        if (fullList == null) {
+            adapter.setPokemonList(new ArrayList<>());
+            return;
+        }
+        List<PokemonReport> filteredList = new ArrayList<>();
+        for (PokemonReport report : fullList) {
+            boolean matchesType = selectedType.equals("All") ||
+                    report.getType().equalsIgnoreCase(selectedType);
+            boolean matchesSearch = searchQuery.isEmpty() ||
+                    report.getName().toLowerCase().contains(searchQuery.toLowerCase());
+            if (matchesType && matchesSearch) {
+                filteredList.add(report);
+            }
+        }
+        adapter.setPokemonList(filteredList);
+    }
+
+    // -----------------------
+    // Implementation of OnPokemonClickListener:
+
+    // Launch the detail activity to show more info
+    @Override
+    public void onItemClick(PokemonReport pokemon) {
+        Intent detailIntent = new Intent(this, PokemonDetailActivity.class);
+        detailIntent.putExtra("pokemon", pokemon);
+        startActivity(detailIntent);
+    }
+
+    // The existing map action remains unchanged.
     @Override
     public void onViewMapClick(PokemonReport pokemon) {
         try {
-            // Correct order: latitude first, then longitude for Google Maps
             String uriString = "geo:" + pokemon.getLatitude() + "," + pokemon.getLongitude() +
                     "?q=" + pokemon.getLatitude() + "," + pokemon.getLongitude() +
                     "(" + pokemon.getName() + ")";
-
             Uri gmmIntentUri = Uri.parse(uriString);
             Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
             mapIntent.setPackage("com.google.android.apps.maps");
@@ -214,7 +262,6 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
             if (mapIntent.resolveActivity(getPackageManager()) != null) {
                 startActivity(mapIntent);
             } else {
-                // Fallback to custom map if needed
                 Intent intent = new Intent(this, MapActivity.class);
                 intent.putExtra("pokemon", pokemon);
                 startActivity(intent);
@@ -223,5 +270,19 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
             Log.e(TAG, "Error opening maps: " + e.getMessage(), e);
             Toast.makeText(this, "Error opening map", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // Share the Pokémon alert details via an ACTION_SEND intent.
+    @Override
+    public void onShareClick(PokemonReport pokemon) {
+        String shareText = "Check out this Pokémon alert!\n\n" +
+                "Name: " + pokemon.getName() + "\n" +
+                "Type: " + pokemon.getType() + "\n" +
+                "Available until: " + pokemon.getEndTime() + "\n" +
+                "Description: " + pokemon.getDescription();
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(shareIntent, "Share via"));
     }
 }
