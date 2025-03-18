@@ -53,14 +53,14 @@
             android:id="@+id/pokemonEndTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="8dp"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
             android:textColor="@color/textColorSecondary"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/pokemonImage"
-            app:layout_constraintTop_toBottomOf="@id/pokemonType"
-            tools:text="Available until: 14:30" />
+            app:layout_constraintStart_toEndOf="@id/pokemonType"
+            app:layout_constraintTop_toTopOf="@id/pokemonType"
+            app:layout_constraintBottom_toBottomOf="@id/pokemonType"
+            tools:text="Until: 14:30" />
 
         <TextView
             android:id="@+id/pokemonDescription"
