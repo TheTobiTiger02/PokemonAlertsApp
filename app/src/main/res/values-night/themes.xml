@@ -17,32 +17,15 @@
         <item name="android:textColorSecondary">@color/textColorSecondary</item>
         <!-- Status bar color -->
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
         <!-- Navigation bar -->
         <item name="android:navigationBarColor">@color/backgroundColor</item>
         <!-- Ripple effects -->
         <item name="colorControlHighlight">@color/rippleColor</item>
         <!-- Disable default night mode text scaling -->
         <item name="android:textSize">14sp</item>
-        <!-- Edge-to-edge support -->
+        <!-- Enable edge-to-edge display -->
         <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-    </style>
-
-    <!-- Chip style -->
-    <style name="Widget.App.Chip" parent="Widget.MaterialComponents.Chip.Choice">
-        <item name="chipBackgroundColor">@color/chipBackgroundColor</item>
-        <item name="chipStrokeColor">@color/colorPrimary</item>
-        <item name="chipStrokeWidth">1dp</item>
-        <item name="android:textColor">@color/textColorPrimary</item>
-        <item name="chipMinHeight">32dp</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <!-- Card style -->
-    <style name="Widget.App.CardView" parent="Widget.MaterialComponents.CardView">
-        <item name="cardBackgroundColor">@color/cardBackground</item>
-        <item name="cardElevation">2dp</item>
-        <item name="cardCornerRadius">8dp</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 </resources>

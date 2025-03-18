@@ -159,58 +159,130 @@ public class MainActivity extends AppCompatActivity
 
             // Add chip click listener
             chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // Special handling for "All" chip
-                if (type.equals("All") && isChecked) {
-                    // If "All" is selected, clear other selections
-                    selectedFilters.clear();
-                    selectedFilters.add("All");
+                // Handle chip selection state changes
+                if (isChecked) {
+                    // Chip is being selected
+                    if (type.equals("All")) {
+                        // Clear all other selections if "All" is selected
+                        selectedFilters.clear();
+                        selectedFilters.add("All");
 
-                    // Update chip states
-                    for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
-                        Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
-                        if (!otherChip.getText().equals("All")) {
-                            otherChip.setChecked(false);
-                        }
-                    }
-                } else if (isChecked) {
-                    // Adding a specific filter
-                    // If this isn't "All" and we're adding it, remove "All"
-                    if (selectedFilters.contains("All")) {
-                        selectedFilters.remove("All");
-                        // Uncheck the "All" chip
+                        // Update all other chips (uncheck them)
                         for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
                             Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
-                            if (otherChip.getText().equals("All")) {
+                            if (!otherChip.getText().equals("All")) {
+                                // Temporarily remove listener to avoid recursion
+                                otherChip.setOnCheckedChangeListener(null);
                                 otherChip.setChecked(false);
-                                break;
+                                // Re-add the listener
+                                final int chipIndex = i;
+                                otherChip.setOnCheckedChangeListener((v, checked) -> {
+                                    String chipType = ALERT_TYPES[chipIndex];
+                                    onChipSelectionChanged(chipType, checked);
+                                });
+                            }
+                        }
+                    } else {
+                        // A specific filter is being selected, so uncheck "All"
+                        selectedFilters.add(type);
+                        if (selectedFilters.contains("All")) {
+                            selectedFilters.remove("All");
+
+                            // Find and uncheck the "All" chip
+                            for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                                Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
+                                if (otherChip.getText().equals("All")) {
+                                    // Temporarily remove listener to avoid recursion
+                                    otherChip.setOnCheckedChangeListener(null);
+                                    otherChip.setChecked(false);
+                                    // Re-add the listener
+                                    otherChip.setOnCheckedChangeListener((v, checked) ->
+                                            onChipSelectionChanged("All", checked));
+                                    break;
+                                }
                             }
                         }
                     }
-                    selectedFilters.add(type);
                 } else {
-                    // Removing a filter
+                    // Chip is being unselected
                     selectedFilters.remove(type);
 
                     // If no filters are selected, select "All"
                     if (selectedFilters.isEmpty()) {
                         selectedFilters.add("All");
-                        // Check the "All" chip
+
+                        // Find and check the "All" chip
                         for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
                             Chip otherChip = (Chip) filterChipGroup.getChildAt(i);
                             if (otherChip.getText().equals("All")) {
+                                // Temporarily remove listener to avoid recursion
+                                otherChip.setOnCheckedChangeListener(null);
                                 otherChip.setChecked(true);
+                                // Re-add the listener
+                                otherChip.setOnCheckedChangeListener((v, checked) ->
+                                        onChipSelectionChanged("All", checked));
                                 break;
                             }
                         }
                     }
                 }
 
-                // Update the displayed list
+                // Update the displayed list based on new filter selection
                 updateDisplayedPokemonList();
             });
 
             filterChipGroup.addView(chip);
         }
+    }
+
+    private void onChipSelectionChanged(String type, boolean isChecked) {
+        if (isChecked) {
+            // Handling chip selection
+            if (type.equals("All")) {
+                selectedFilters.clear();
+                selectedFilters.add("All");
+
+                // Uncheck all other chips
+                for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                    Chip chip = (Chip) filterChipGroup.getChildAt(i);
+                    if (!chip.getText().equals("All")) {
+                        chip.setChecked(false);
+                    }
+                }
+            } else {
+                // A specific filter is selected
+                selectedFilters.add(type);
+
+                // If "All" was selected, uncheck it
+                if (selectedFilters.contains("All")) {
+                    selectedFilters.remove("All");
+                    for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                        Chip chip = (Chip) filterChipGroup.getChildAt(i);
+                        if (chip.getText().equals("All")) {
+                            chip.setChecked(false);
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Handling chip deselection
+            selectedFilters.remove(type);
+
+            // If no filters are selected, select "All"
+            if (selectedFilters.isEmpty()) {
+                selectedFilters.add("All");
+                for (int i = 0; i < filterChipGroup.getChildCount(); i++) {
+                    Chip chip = (Chip) filterChipGroup.getChildAt(i);
+                    if (chip.getText().equals("All")) {
+                        chip.setChecked(true);
+                        break;
+                    }
+                }
+            }
+        }
+
+        updateDisplayedPokemonList();
     }
 
     private void callTestEndpoint() {
