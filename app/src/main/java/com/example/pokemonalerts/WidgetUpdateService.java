@@ -1,3 +1,4 @@
+// WidgetUpdateService.java
 package com.example.pokemonalerts;
 
 import android.Manifest;
@@ -110,6 +111,8 @@ public class WidgetUpdateService extends Service {
                                 PokemonWidgetProvider.class);
                         updateIntent.setAction(PokemonWidgetProvider.ACTION_UPDATE_WIDGET);
                         sendBroadcast(updateIntent);
+
+                        Log.d(TAG, "Widget data updated with " + newPokemonReports.size() + " items");
                     }
                 }
             }
@@ -165,8 +168,9 @@ public class WidgetUpdateService extends Service {
     }
 
     private void showNotification(PokemonReport pokemon) {
-        // Create an explicit intent for the MainActivity
-        Intent intent = new Intent(this, MainActivity.class);
+        // Create an explicit intent for the PokemonDetailActivity
+        Intent intent = new Intent(this, PokemonDetailActivity.class);
+        intent.putExtra("pokemon", pokemon);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 this,

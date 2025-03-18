@@ -1,3 +1,4 @@
+// PokemonWidgetService.java
 package com.example.pokemonalerts;
 
 import android.content.Context;
@@ -5,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -20,7 +22,7 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 public class PokemonWidgetService extends RemoteViewsService {
-
+    private static final String TAG = "PokemonWidgetService";
     private static List<PokemonReport> pokemonReports = new ArrayList<>();
     // Keep track of previous data to avoid unnecessary updates
     private static List<PokemonReport> previousPokemonReports = new ArrayList<>();
@@ -150,10 +152,13 @@ public class PokemonWidgetService extends RemoteViewsService {
             }
 
             // Set up the fill-in intent for item clicks
-            Bundle extras = new Bundle();
-            extras.putInt(PokemonWidgetProvider.EXTRA_ITEM_POSITION, position);
             Intent fillInIntent = new Intent();
-            fillInIntent.putExtras(extras);
+            fillInIntent.putExtra(PokemonWidgetProvider.EXTRA_ITEM_POSITION, position);
+
+            // Log the position being set in the fill-in intent
+            Log.d(TAG, "Setting fill-in intent for position: " + position);
+
+            // Set the fill-in intent on the entire item layout
             rv.setOnClickFillInIntent(R.id.widget_list_item, fillInIntent);
 
             return rv;

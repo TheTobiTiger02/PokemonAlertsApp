@@ -1,3 +1,4 @@
+// PokemonWidgetProvider.java
 package com.example.pokemonalerts;
 
 import android.app.PendingIntent;
@@ -9,8 +10,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.widget.RemoteViews;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,9 +21,11 @@ import java.util.Locale;
 
 public class PokemonWidgetProvider extends AppWidgetProvider {
 
+    private static final String TAG = "PokemonWidgetProvider";
     public static final String ACTION_UPDATE_WIDGET = "com.example.pokemonalerts.ACTION_UPDATE_WIDGET";
     public static final String ACTION_ITEM_CLICK = "com.example.pokemonalerts.ACTION_ITEM_CLICK";
     public static final String EXTRA_ITEM_POSITION = "com.example.pokemonalerts.EXTRA_ITEM_POSITION";
+    public static final String EXTRA_POKEMON_REPORT = "com.example.pokemonalerts.EXTRA_POKEMON_REPORT";
 
     // Track last update time to prevent excessive UI updates
     private static long lastUpdateTime = 0;
@@ -94,14 +99,25 @@ public class PokemonWidgetProvider extends AppWidgetProvider {
         } else if (ACTION_ITEM_CLICK.equals(intent.getAction())) {
             // Handle item click
             int position = intent.getIntExtra(EXTRA_ITEM_POSITION, -1);
+            Log.d(TAG, "Widget item clicked at position: " + position);
+
             if (position != -1) {
-                // Load and open the map activity with the selected Pokemon
-                Intent mapIntent = new Intent(context, MapActivity.class);
+                // Get the Pokemon at the clicked position
                 PokemonReport pokemon = PokemonWidgetService.getPokemonAtPosition(position);
                 if (pokemon != null) {
-                    mapIntent.putExtra("pokemon", pokemon);
-                    mapIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(mapIntent);
+                    // Launch the detail activity with the selected Pokemon
+                    Intent detailIntent = new Intent(context, PokemonDetailActivity.class);
+                    detailIntent.putExtra("pokemon", pokemon);
+                    detailIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(detailIntent);
+
+                    Log.d(TAG, "Launching detail activity for: " + pokemon.getName());
+                } else {
+                    Log.e(TAG, "Pokemon at position " + position + " is null");
+                    // Fallback to main activity if Pokemon data is missing
+                    Intent mainIntent = new Intent(context, MainActivity.class);
+                    mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(mainIntent);
                 }
             }
         }
