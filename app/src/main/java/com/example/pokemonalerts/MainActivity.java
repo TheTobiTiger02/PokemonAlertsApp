@@ -1,17 +1,25 @@
 package com.example.pokemonalerts;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -20,6 +28,7 @@ import android.widget.Toast;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -56,13 +65,13 @@ public class MainActivity extends AppCompatActivity
     private String searchQuery = "";
     private Set<String> selectedFilters = new HashSet<>();
 
+    // Permission request
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Start widget update service
-        startService(new Intent(this, WidgetUpdateService.class));
 
         // Initialize views
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -75,6 +84,22 @@ public class MainActivity extends AppCompatActivity
         filterChipGroup = findViewById(R.id.filterChipGroup);
         btnDebug = findViewById(R.id.btnDebug);
         searchView = findViewById(R.id.searchView);
+
+        // Set up permission launcher
+        requestPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        startServices();
+                    } else {
+                        // Permission denied, show a dialog explaining why we need it
+                        showPermissionExplanationDialog();
+                    }
+                }
+        );
+
+        // Check for notification permission first (for Android 13+)
+        checkNotificationPermission();
 
         // Set up debug button
         btnDebug.setOnClickListener(v -> callTestEndpoint());
@@ -138,6 +163,55 @@ public class MainActivity extends AppCompatActivity
 
         // Load data
         viewModel.loadPokemonReports();
+    }
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            } else {
+                // Permission already granted, start services
+                startServices();
+            }
+        } else {
+            // For pre-Android 13, notification permission is not needed
+            startServices();
+        }
+    }
+
+    private void showPermissionExplanationDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Notification Permission Required")
+                .setMessage("Pokémon Alerts needs notification permission to show you " +
+                        "alerts about nearby Pokémon. Without this permission, " +
+                        "you won't receive important alerts.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    // Open app settings
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Not Now", (dialog, which) -> {
+                    dialog.dismiss();
+                    // Start services without notification capability
+                    startServices();
+                })
+                .show();
+    }
+
+    private void startServices() {
+        // Start widget update service
+        startService(new Intent(this, WidgetUpdateService.class));
+
+        // Start foreground notification service
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(new Intent(this, ForegroundNotificationService.class));
+        } else {
+            startService(new Intent(this, ForegroundNotificationService.class));
+        }
     }
 
     private void setupFilterChips() {
