@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="alert_types">
+        <item>All</item>
+        <item>Rare</item>
+        <item>PvP</item>
+        <item>Hundo</item>
+        <item>Nundo</item>
+        <item>Raid</item>
+        <item>Rocket</item>
+        <item>Kecleon</item>
+    </string-array>
+    <string-array name="alert_types_default">
+        <item>All</item>
+    </string-array>
+</resources>

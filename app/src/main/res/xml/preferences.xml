@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <MultiSelectListPreference
+        android:key="pref_notify_types"
+        android:title="Notification Alert Types"
+        android:summary="Choose which types of alerts you'd like to be notified about"
+        android:entries="@array/alert_types"
+        android:entryValues="@array/alert_types"
+        android:defaultValue="@array/alert_types_default" />
+
+    <MultiSelectListPreference
+        android:key="pref_display_types"
+        android:title="Displayed Alert Types"
+        android:summary="Choose which types of alerts you'd like to see in the app"
+        android:entries="@array/alert_types"
+        android:entryValues="@array/alert_types"
+        android:defaultValue="@array/alert_types_default" />
+
+</PreferenceScreen>

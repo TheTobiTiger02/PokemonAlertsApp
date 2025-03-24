@@ -1,4 +1,3 @@
-// WidgetUpdateService.java
 package com.example.pokemonalerts;
 
 import android.Manifest;
@@ -10,9 +9,11 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -21,10 +22,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -88,7 +88,7 @@ public class WidgetUpdateService extends Service {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PokemonReport> newPokemonReports = response.body();
 
-                    // First check for any new alerts that need notifications
+                    // First, check for any new alerts that need notifications
                     checkForNewAlerts(newPokemonReports);
 
                     boolean dataChanged =
@@ -143,12 +143,8 @@ public class WidgetUpdateService extends Service {
             showNotification(newAlert);
         }
 
-        // Limit the size of the notifiedAlertIds set to prevent memory issues
-        // over long periods of time (this is a simple approach)
+        // Limit the size of the notifiedAlertIds set
         if (notifiedAlertIds.size() > 1000) {
-            // If we have too many IDs stored, clear older ones
-            // This is a very simple approach - in a real app, you might want
-            // to use a more sophisticated caching mechanism with expiration
             Set<String> newSet = new HashSet<>();
             for (PokemonReport report : currentReports) {
                 newSet.add(createAlertId(report));
@@ -159,7 +155,6 @@ public class WidgetUpdateService extends Service {
 
     // Create a unique identifier for a Pokemon alert
     private String createAlertId(PokemonReport report) {
-        // Combine key fields to create a unique identifier
         return report.getName() + "_" +
                 report.getType() + "_" +
                 report.getLatitude() + "_" +
@@ -168,6 +163,17 @@ public class WidgetUpdateService extends Service {
     }
 
     private void showNotification(PokemonReport pokemon) {
+        // Check the user’s notification preferences
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        Set<String> notifyTypes = prefs.getStringSet("pref_notify_types",
+                new HashSet<>(Arrays.asList("All")));
+        boolean notifyAll = notifyTypes.contains("All");
+
+        if (!notifyAll && !notifyTypes.contains(pokemon.getType())) {
+            Log.d(TAG, "Not notifying for type: " + pokemon.getType());
+            return;
+        }
+
         // Create an explicit intent for the PokemonDetailActivity
         Intent intent = new Intent(this, PokemonDetailActivity.class);
         intent.putExtra("pokemon", pokemon);
