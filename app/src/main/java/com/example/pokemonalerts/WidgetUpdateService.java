@@ -1,6 +1,7 @@
 package com.example.pokemonalerts;
 
 import android.Manifest;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -13,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -38,8 +40,11 @@ public class WidgetUpdateService extends Service {
     private static final String TAG = "WidgetUpdateService";
     private static final long UPDATE_INTERVAL = 5 * 1000; // 5 seconds
     private static final String CHANNEL_ID = "PokemonAlertsChannel";
+    private static final String WIDGET_SERVICE_CHANNEL_ID = "WidgetServiceChannel";
+    private static final int FOREGROUND_NOTIFICATION_ID = 2001;
     private static int notificationId = 0; // Increment for each notification
     private Timer timer;
+    private PowerManager.WakeLock wakeLock;
 
     // Track previously seen alerts to avoid duplicate notifications
     private Set<String> notifiedAlertIds = new HashSet<>();
@@ -48,11 +53,29 @@ public class WidgetUpdateService extends Service {
     public void onCreate() {
         super.onCreate();
         timer = new Timer();
-        createNotificationChannel();
+
+        // Acquire wake lock to prevent service from being killed
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "PokemonAlerts:WidgetService"
+        );
+        wakeLock.acquire();
+
+        createNotificationChannels();
+
+        // Start as foreground service to prevent being killed
+        startForeground(FOREGROUND_NOTIFICATION_ID, createServiceNotification());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Cancel existing timer and start new one
+        if (timer != null) {
+            timer.cancel();
+        }
+        timer = new Timer();
+
         // Schedule frequent updates
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -61,19 +84,57 @@ public class WidgetUpdateService extends Service {
             }
         }, 0, UPDATE_INTERVAL);
 
+        // Schedule periodic service restart to ensure persistence
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                ensureServicePersistence();
+            }
+        }, 5 * 60 * 1000, 5 * 60 * 1000); // Every 5 minutes
+
         return START_STICKY;
     }
 
-    private void createNotificationChannel() {
+    private void createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Pokemon Alerts Channel";
-            String description = "Channel for Pokemon Alerts notifications";
-            int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
+            // Channel for Pokemon alerts
+            NotificationChannel alertChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Pokemon Alerts Channel",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            alertChannel.setDescription("Channel for Pokemon Alerts notifications");
+
+            // Channel for widget service
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    WIDGET_SERVICE_CHANNEL_ID,
+                    "Widget Service Channel",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            serviceChannel.setDescription("Channel for Widget Update Service");
+            serviceChannel.setSound(null, null);
+            serviceChannel.enableVibration(false);
+
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            notificationManager.createNotificationChannel(alertChannel);
+            notificationManager.createNotificationChannel(serviceChannel);
         }
+    }
+
+    private Notification createServiceNotification() {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(this, WIDGET_SERVICE_CHANNEL_ID)
+                .setContentTitle("Pokemon Alerts Widget Service")
+                .setContentText("Keeping widgets updated")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                .build();
     }
 
     private void updateWidgetData() {
@@ -163,7 +224,7 @@ public class WidgetUpdateService extends Service {
     }
 
     private void showNotification(PokemonReport pokemon) {
-        // Check the user’s notification preferences
+        // Check the user's notification preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Set<String> notifyTypes = prefs.getStringSet("pref_notify_types",
                 new HashSet<>(Arrays.asList("All")));
@@ -211,12 +272,48 @@ public class WidgetUpdateService extends Service {
         notificationManager.notify(notificationId++, builder.build());
     }
 
+    private void ensureServicePersistence() {
+        // Re-schedule alarm receiver to ensure periodic updates continue
+        AlarmReceiver.schedulePeriodicUpdates(this);
+        Log.d(TAG, "Service persistence check - rescheduled alarms");
+    }
+
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        Log.d(TAG, "WidgetUpdateService destroyed - attempting restart");
+
         if (timer != null) {
             timer.cancel();
         }
+
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+
+        // Restart the service
+        Intent restartIntent = new Intent(this, WidgetUpdateService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(restartIntent);
+        } else {
+            startService(restartIntent);
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.d(TAG, "Task removed - ensuring widget service continues");
+
+        // Restart the service when task is removed
+        Intent restartIntent = new Intent(this, WidgetUpdateService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(restartIntent);
+        } else {
+            startService(restartIntent);
+        }
+
+        super.onTaskRemoved(rootIntent);
     }
 
     @Nullable

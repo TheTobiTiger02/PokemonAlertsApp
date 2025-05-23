@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
                     if (isGranted) {
-                        startServices();
+                        checkBatteryOptimization();
                     } else {
                         // Permission denied, show a dialog explaining why we need it
                         showPermissionExplanationDialog();
@@ -159,11 +160,52 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
                     Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             } else {
+                checkBatteryOptimization();
+            }
+        } else {
+            checkBatteryOptimization();
+        }
+    }
+
+    private void checkBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            String packageName = getPackageName();
+
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                showBatteryOptimizationDialog();
+            } else {
                 startServices();
             }
         } else {
             startServices();
         }
+    }
+
+    private void showBatteryOptimizationDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Battery Optimization")
+                .setMessage("To ensure Pokemon Alerts continues running in the background and sending notifications, please disable battery optimization for this app.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            Intent intent = new Intent();
+                            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                            intent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            // Fallback to general battery optimization settings
+                            Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                            startActivity(intent);
+                        }
+                    }
+                    startServices();
+                })
+                .setNegativeButton("Skip", (dialog, which) -> {
+                    dialog.dismiss();
+                    startServices();
+                })
+                .show();
     }
 
     private void showPermissionExplanationDialog() {
@@ -178,21 +220,32 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
                 })
                 .setNegativeButton("Not Now", (dialog, which) -> {
                     dialog.dismiss();
-                    startServices();
+                    checkBatteryOptimization();
                 })
                 .show();
     }
 
     private void startServices() {
+        // Schedule alarm receiver for periodic updates
+        AlarmReceiver.schedulePeriodicUpdates(this);
+
         // Start widget update service
-        startService(new Intent(this, WidgetUpdateService.class));
+        Intent widgetServiceIntent = new Intent(this, WidgetUpdateService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(widgetServiceIntent);
+        } else {
+            startService(widgetServiceIntent);
+        }
 
         // Start foreground notification service
+        Intent foregroundServiceIntent = new Intent(this, ForegroundNotificationService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(new Intent(this, ForegroundNotificationService.class));
+            startForegroundService(foregroundServiceIntent);
         } else {
-            startService(new Intent(this, ForegroundNotificationService.class));
+            startService(foregroundServiceIntent);
         }
+
+        Log.d(TAG, "All services and alarms started");
     }
 
     private void setupAutoRefresh() {
@@ -210,6 +263,9 @@ public class MainActivity extends AppCompatActivity implements PokemonAdapter.On
     protected void onResume() {
         super.onResume();
         autoRefreshHandler.postDelayed(autoRefreshRunnable, AUTO_REFRESH_INTERVAL);
+
+        // Ensure services are still running when app resumes
+        startServices();
     }
 
     @Override

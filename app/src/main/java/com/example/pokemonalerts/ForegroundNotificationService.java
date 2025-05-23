@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -34,11 +35,21 @@ public class ForegroundNotificationService extends Service {
     private Timer timer;
     private List<PokemonReport> currentAlerts;
     private NotificationManager notificationManager;
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "ForegroundNotificationService created");
+
+        // Acquire wake lock to prevent service from being killed
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "PokemonAlerts:ForegroundService"
+        );
+        wakeLock.acquire();
+
         createNotificationChannel();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         timer = new Timer();
@@ -46,13 +57,21 @@ public class ForegroundNotificationService extends Service {
         // Initial notification with loading state
         startForeground(NOTIFICATION_ID, createNotification("Loading alerts..."));
 
-        // Schedule regular updates
+        // Schedule regular updates with more aggressive timing
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 fetchAlerts();
             }
         }, 0, UPDATE_INTERVAL);
+
+        // Schedule periodic service restart to ensure persistence
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                ensureServicePersistence();
+            }
+        }, 5 * 60 * 1000, 5 * 60 * 1000); // Every 5 minutes
     }
 
     private void createNotificationChannel() {
@@ -63,6 +82,8 @@ public class ForegroundNotificationService extends Service {
                     NotificationManager.IMPORTANCE_LOW); // Low importance for persistent notification
             channel.setDescription("Shows current Pokemon alerts");
             channel.setShowBadge(false);
+            channel.setSound(null, null); // No sound for persistent notification
+            channel.enableVibration(false);
 
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
@@ -95,7 +116,8 @@ public class ForegroundNotificationService extends Service {
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
                 .addAction(R.drawable.ic_refresh, "Refresh", refreshPendingIntent)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(message));
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE);
 
         // If we have alerts, show the count and first few alerts
         if (currentAlerts != null && !currentAlerts.isEmpty()) {
@@ -161,6 +183,16 @@ public class ForegroundNotificationService extends Service {
         notificationManager.notify(NOTIFICATION_ID, createNotification(""));
     }
 
+    private void ensureServicePersistence() {
+        // Re-schedule alarm receiver to ensure periodic updates continue
+        AlarmReceiver.schedulePeriodicUpdates(this);
+
+        // Update notification to show service is still alive
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        String currentTime = sdf.format(new Date());
+        Log.d(TAG, "Service persistence check at " + currentTime);
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service onStartCommand");
@@ -172,17 +204,47 @@ public class ForegroundNotificationService extends Service {
             fetchAlerts();
         }
 
+        // Return START_STICKY to ensure service is restarted if killed
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "Service destroyed");
+        Log.d(TAG, "Service destroyed - attempting restart");
+
         if (timer != null) {
             timer.cancel();
             timer = null;
         }
+
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+
+        // Restart the service
+        Intent restartIntent = new Intent(this, ForegroundNotificationService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(restartIntent);
+        } else {
+            startService(restartIntent);
+        }
+
         super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.d(TAG, "Task removed - ensuring service continues");
+
+        // Restart the service when task is removed
+        Intent restartIntent = new Intent(this, ForegroundNotificationService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(restartIntent);
+        } else {
+            startService(restartIntent);
+        }
+
+        super.onTaskRemoved(rootIntent);
     }
 
     @Nullable
