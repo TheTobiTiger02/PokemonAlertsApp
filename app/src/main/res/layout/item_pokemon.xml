@@ -5,22 +5,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="@color/cardBackground"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardMaxElevation="6dp"
+    app:cardUseCompatPadding="true"
     style="@style/Widget.App.CardView">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:padding="16dp">
 
         <ImageView
             android:id="@+id/pokemonImage"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:scaleType="centerInside"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/placeholder_pokemon"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:src="@drawable/placeholder_pokemon" />
@@ -29,9 +33,11 @@
             android:id="@+id/pokemonName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:layout_marginStart="16dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
             android:textColor="@color/textColorPrimary"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/pokemonImage"
             app:layout_constraintTop_toTopOf="parent"
@@ -41,10 +47,13 @@
             android:id="@+id/pokemonType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            app:chipMinHeight="24dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="6dp"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            style="@style/Widget.App.Chip"
+            app:chipMinHeight="32dp"
+            app:chipCornerRadius="16dp"
             app:layout_constraintStart_toEndOf="@id/pokemonImage"
             app:layout_constraintTop_toBottomOf="@id/pokemonName"
             tools:text="Rare" />
@@ -53,9 +62,11 @@
             android:id="@+id/pokemonEndTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:layout_marginStart="12dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             android:textColor="@color/textColorSecondary"
+            android:fontFamily="sans-serif"
+            android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/pokemonType"
             app:layout_constraintTop_toTopOf="@id/pokemonType"
@@ -66,38 +77,52 @@
             android:id="@+id/pokemonDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:layout_marginTop="16dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
             android:textColor="@color/textColorSecondary"
+            android:fontFamily="sans-serif"
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
             app:layout_constraintTop_toBottomOf="@id/pokemonImage"
             tools:text="This rare Pikachu has perfect IVs!" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/pokemonDescription">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnViewOnMap"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.App.Button.Outlined"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_weight="1"
+                android:layout_marginEnd="8dp"
                 android:text="Map"
                 android:textAllCaps="false"
-                app:icon="@drawable/ic_map" />
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14sp"
+                app:icon="@drawable/ic_map"
+                app:iconSize="18dp"
+                app:iconPadding="6dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnShare"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.App.Button"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_weight="1"
+                android:layout_marginStart="8dp"
                 android:text="Share"
                 android:textAllCaps="false"
-                app:icon="@drawable/ic_share" />
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14sp"
+                app:icon="@drawable/ic_share"
+                app:iconSize="18dp"
+                app:iconPadding="6dp" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

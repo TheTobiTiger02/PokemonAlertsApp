@@ -16,10 +16,11 @@
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
-            android:layout_height="230dp"
+            android:layout_height="280dp"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:contentScrim="@color/colorPrimary"
+            app:contentScrim="@drawable/gradient_primary"
             app:expandedTitleTextAppearance="@android:color/transparent"
+            app:scrimAnimationDuration="300"
             android:fitsSystemWindows="true">
 
             <ImageView
@@ -50,36 +51,44 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <TextView
                 android:id="@+id/detailName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
                 android:textColor="@color/textColorPrimary"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="28sp"
                 tools:text="Pikachu" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/detailType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="@style/Widget.App.Chip"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif-medium"
                     tools:text="Rare" />
 
                 <TextView
                     android:id="@+id/detailEndTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="12dp"
                     android:layout_gravity="center_vertical"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
                     android:textColor="@color/textColorSecondary"
+                    android:fontFamily="sans-serif"
+                    android:textSize="15sp"
                     tools:text="Available until: 14:30" />
             </LinearLayout>
 
@@ -115,28 +124,41 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnViewOnMap"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.App.Button.Outlined"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:text="View on Map"
-                app:icon="@drawable/ic_map" />
+                android:textAllCaps="false"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="16sp"
+                app:icon="@drawable/ic_map"
+                app:iconSize="20dp"
+                app:iconPadding="8dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDetailShare"
-                style="@style/Widget.MaterialComponents.Button"
+                style="@style/Widget.App.Button"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:text="Share"
-                android:layout_marginTop="8dp"
-                app:icon="@drawable/ic_share" />
+                android:textAllCaps="false"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="16sp"
+                android:layout_marginTop="12dp"
+                app:icon="@drawable/ic_share"
+                app:iconSize="20dp"
+                app:iconPadding="8dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBack"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.App.Button.Text"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:text="Back"
-                android:layout_marginTop="8dp" />
+                android:textAllCaps="false"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="16sp"
+                android:layout_marginTop="12dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

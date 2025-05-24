@@ -1,25 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary palette -->
-    <color name="colorPrimary">#2196F3</color>
-    <color name="colorPrimaryDark">#1976D2</color>
-    <color name="colorAccent">#03DAC5</color>
+    <!-- Modern Pokemon-inspired Primary palette -->
+    <color name="colorPrimary">#6C63FF</color>
+    <color name="colorPrimaryDark">#5A52D5</color>
+    <color name="colorAccent">#FF6B9D</color>
+    <color name="colorSecondary">#4ECDC4</color>
+
+    <!-- Gradient colors -->
+    <color name="gradientStart">#667eea</color>
+    <color name="gradientEnd">#764ba2</color>
+    <color name="cardGradientStart">#ffecd2</color>
+    <color name="cardGradientEnd">#fcb69f</color>
 
     <!-- Background colors -->
-    <color name="backgroundColor">#FAFAFA</color>
+    <color name="backgroundColor">#F8F9FF</color>
     <color name="cardBackground">#FFFFFF</color>
-    <color name="dividerColor">#E0E0E0</color>
+    <color name="cardBackgroundElevated">#FEFEFE</color>
+    <color name="dividerColor">#E8EAED</color>
+    <color name="surfaceVariant">#F3F4F8</color>
 
     <!-- Text colors -->
-    <color name="textColorPrimary">#212121</color>
-    <color name="textColorSecondary">#757575</color>
-    <color name="textColorTertiary">#9E9E9E</color>
+    <color name="textColorPrimary">#1A1A2E</color>
+    <color name="textColorSecondary">#6B7280</color>
+    <color name="textColorTertiary">#9CA3AF</color>
+    <color name="textColorOnPrimary">#FFFFFF</color>
 
     <!-- UI component colors -->
-    <color name="chipBackgroundColor">#E3F2FD</color>
-    <color name="chipSelectedColor">#BBDEFB</color>
-    <color name="iconTint">#616161</color>
-    <color name="rippleColor">#B3E5FC</color>
+    <color name="chipBackgroundColor">#F0F4FF</color>
+    <color name="chipSelectedColor">#E8EFFF</color>
+    <color name="chipTextColor">#6C63FF</color>
+    <color name="iconTint">#6B7280</color>
+    <color name="iconTintActive">#6C63FF</color>
+    <color name="rippleColor">#E8EFFF</color>
+    <color name="shadowColor">#1A1A2E</color>
 
     <!-- Pokemon type colors (unchanged) -->
     <color name="type_rare">#FFD700</color>
